@@ -3,7 +3,7 @@
  * Core orchestrator for the smart parking lot backend system.
  */
 
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const { Floor } = require('../models/Floor');
 const { SpotType } = require('../models/ParkingSpot');
 const { EntryGate, ExitGate } = require('../models/Gate');
@@ -137,7 +137,7 @@ class ParkingLotService {
       const vehicle = VehicleFactory.createVehicle(normalizedPlate, vehicleType);
       const allocatedSpot = this.allocationService.allocateSpot(this.floors, vehicle);
 
-      const ticketId = `TCK-${Date.now()}-${uuidv4().substring(0, 6).toUpperCase()}`;
+      const ticketId = `TCK-${Date.now()}-${randomUUID().substring(0, 6).toUpperCase()}`;
       const ticket = new Ticket(ticketId, vehicle, allocatedSpot, gateId, entryTime);
 
       this.activeTickets.set(ticketId, ticket);
@@ -177,7 +177,7 @@ class ParkingLotService {
     const feeCalculation = this.feeCalculationService.calculate(ticket, exitTime, occupancyPercent);
 
     // Process payment
-    const paymentId = `PAY-${Date.now()}-${uuidv4().substring(0, 6).toUpperCase()}`;
+    const paymentId = `PAY-${Date.now()}-${randomUUID().substring(0, 6).toUpperCase()}`;
     const payment = new Payment(paymentId, ticketId, feeCalculation.totalFee, paymentMethod, exitTime);
 
     // Concurrently safe spot release

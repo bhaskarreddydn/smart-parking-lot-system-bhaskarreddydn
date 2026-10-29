@@ -1,18 +1,19 @@
-# Smart Parking Lot System - Low-Level Design (LLD) & Backend Architecture
+# Smart Parking Lot System - Low-Level Design (LLD)
 
 [![Node.js](https://img.shields.io/badge/Node.js-v18%2B%20%7C%20v24-green.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-29%2F29%20Passing-brightgreen.svg)]()
+[![Zero External Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Node%20OOP)-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-21%2F21%20Passing-brightgreen.svg)]()
 [![Design Patterns](https://img.shields.io/badge/Design%20Patterns-SOLID%20%7C%20Strategy%20%7C%20Factory%20%7C%20Observer%20%7C%20Singleton-orange.svg)]()
 
-> **Project Brief & Objective**: Design and implement the low-level architecture for an urban multi-floor backend smart parking lot system. The system automates vehicle entry and exit management, parking space allocation based on vehicle size and proximity, real-time availability updates across floors, dynamic fee calculations, and multi-gate concurrency control to prevent double booking.
+> **Project Objective**: Low-Level Design (LLD) and object-oriented backend architecture for an urban multi-floor smart parking lot system. The system automates vehicle entry and exit management, parking space allocation based on vehicle size and proximity, real-time availability updates across floors, dynamic fee calculations, and multi-gate concurrency control to prevent double booking.
 
 ---
 
 ## 📑 Table of Contents
-1. [Core Features & Functional Requirements](#-core-features--functional-requirements)
+1. [Core Requirements & Features](#-core-requirements--features)
 2. [Object-Oriented Design & Design Patterns](#-object-oriented-design--design-patterns)
-3. [Architecture & Diagrams](#-architecture--diagrams)
+3. [Architecture & UML Diagrams](#-architecture--uml-diagrams)
    - [Class Diagram](#class-diagram)
    - [Vehicle Check-In Flow (Sequence Diagram)](#vehicle-check-in-flow)
    - [Vehicle Check-Out Flow (Sequence Diagram)](#vehicle-check-out-flow)
@@ -21,14 +22,13 @@
 5. [Fee Calculation & Dynamic Pricing](#-fee-calculation--dynamic-pricing)
 6. [Concurrency & Race Condition Handling](#-concurrency--race-condition-handling)
 7. [Database Schema DDL](#-database-schema-ddl)
-8. [REST API Specification](#-rest-api-specification)
-9. [Project Directory Structure](#-project-directory-structure)
-10. [Getting Started & Installation](#-getting-started--installation)
-11. [Running Tests](#-running-tests)
+8. [Project Structure](#-project-structure)
+9. [How to Run the LLD Simulation (`main.js`)](#-how-to-run-the-lld-simulation-mainjs)
+10. [Running the Test Suite](#-running-the-test-suite)
 
 ---
 
-## 🎯 Core Features & Functional Requirements
+## 🎯 Core Requirements & Features
 
 1. **Automatic Spot Allocation**:
    - Assigns available parking spots based on vehicle type:
@@ -60,9 +60,9 @@
 
 ## 🏗️ Object-Oriented Design & Design Patterns
 
-The system strictly adheres to **SOLID** principles and uses industry-standard design patterns:
+The architecture strictly adheres to **SOLID** principles:
 
-| Pattern | Component | Purpose |
+| Design Pattern | Component | Purpose |
 | :--- | :--- | :--- |
 | **Strategy Pattern** | `AllocationStrategy`<br>`NearestSpotStrategy`<br>`BestFitStrategy` | Encapsulates spot search algorithms and allows switching allocation policies at runtime without modifying client code. |
 | **Strategy Pattern** | `PricingStrategy`<br>`HourlyPricingStrategy`<br>`DynamicPricingStrategy` | Decouples fee calculation logic from ticket checkout, enabling surge pricing or special rate cards. |
@@ -73,7 +73,7 @@ The system strictly adheres to **SOLID** principles and uses industry-standard d
 
 ---
 
-## 📊 Architecture & Diagrams
+## 📊 Architecture & UML Diagrams
 
 ### Class Diagram
 
@@ -361,7 +361,7 @@ erDiagram
 
 ## 🔒 Concurrency & Race Condition Handling
 
-When multiple vehicles arrive at simultaneous entrance gates (e.g. Gate 1, Gate 2, Gate 3) within the same millisecond:
+When multiple vehicles arrive at simultaneous entrance gates (e.g. Gate 1 and Gate 2) within the same millisecond:
 - Without concurrency protection, two incoming cars would read the same available spot as free and receive duplicate tickets for the same physical slot.
 - **Solution**: The `ConcurrencyManager` introduces an asynchronous Mutex mechanism around the allocation critical section:
   ```javascript
@@ -371,7 +371,7 @@ When multiple vehicles arrive at simultaneous entrance gates (e.g. Gate 1, Gate 
     // Spot is marked occupied atomically before next queued request evaluates availability
   });
   ```
-- **Verification**: Verified under heavy multi-threading simulation (`tests/concurrency/concurrency.test.js` and `POST /api/v1/parking/simulate/concurrency`), confirming **100% unique spot assignments** and zero duplicate bookings.
+- **Verification**: Verified under heavy multi-threading simulation (`tests/concurrency/concurrency.test.js`), confirming **100% unique spot assignments** and zero duplicate bookings.
 
 ---
 
@@ -386,93 +386,7 @@ Highlights:
 
 ---
 
-## 📡 REST API Specification
-
-### Base URL: `http://localhost:3000/api/v1/parking`
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/status` | Complete system status, occupancy rate, floor summaries, and active gate list |
-| `GET` | `/availability` | Real-time counts of available spots per floor and vehicle type |
-| `GET` | `/spots` | Filterable spot directory (`?floor=1&type=MEDIUM&occupied=false`) |
-| `POST` | `/entry` | Check-in vehicle, atomically allocate spot, issue ticket |
-| `POST` | `/exit` | Check-out vehicle, compute fee, settle payment, vacate spot |
-| `GET` | `/tickets/:ticketId` | Fetch ticket status and transaction breakdown |
-| `POST` | `/configure-strategies` | Switch active allocation or pricing strategy at runtime |
-| `POST` | `/simulate/concurrency` | Fire concurrent vehicle arrivals to stress-test atomic spot locks |
-
-#### Sample Request: Check-In (`POST /entry`)
-```json
-{
-  "licensePlate": "KA-01-AB-1234",
-  "vehicleType": "CAR",
-  "gateId": "GATE-IN-1"
-}
-```
-
-#### Sample Response: Check-In (201 Created)
-```json
-{
-  "success": true,
-  "message": "Vehicle checked in successfully. Parking spot allocated.",
-  "data": {
-    "ticketId": "TCK-1740809200000-A1B2C3",
-    "licensePlate": "KA-01-AB-1234",
-    "vehicleType": "CAR",
-    "spotId": "F1-S04",
-    "floorNumber": 1,
-    "spotNumber": 4,
-    "spotType": "MEDIUM",
-    "entryGateId": "GATE-IN-1",
-    "entryTime": "2026-10-29T06:20:00.000Z",
-    "status": "ACTIVE"
-  }
-}
-```
-
-#### Sample Request: Check-Out (`POST /exit`)
-```json
-{
-  "ticketId": "TCK-1740809200000-A1B2C3",
-  "paymentMethod": "UPI",
-  "gateId": "GATE-OUT-1"
-}
-```
-
-#### Sample Response: Check-Out (200 OK)
-```json
-{
-  "success": true,
-  "message": "Vehicle checked out successfully. Spot vacated and payment settled.",
-  "data": {
-    "ticket": {
-      "ticketId": "TCK-1740809200000-A1B2C3",
-      "licensePlate": "KA-01-AB-1234",
-      "spotId": "F1-S04",
-      "durationMinutes": 125,
-      "fee": 60,
-      "status": "COMPLETED"
-    },
-    "payment": {
-      "paymentId": "PAY-1740809300000-DEF456",
-      "amount": 60,
-      "paymentMethod": "UPI",
-      "status": "SUCCESS",
-      "transactionRef": "TXN-1740809300000-789"
-    },
-    "feeBreakdown": {
-      "billableHours": 3,
-      "hourlyRate": 20,
-      "surgeMultiplier": 1.0,
-      "totalFee": 60
-    }
-  }
-}
-```
-
----
-
-## 📁 Project Directory Structure
+## 📁 Project Structure
 
 ```
 smart-parking-lot-system-bhaskarreddydn/
@@ -481,8 +395,6 @@ smart-parking-lot-system-bhaskarreddydn/
 ├── src/
 │   ├── config/
 │   │   └── pricingConfig.js           # Rates, grace periods, surge rules
-│   ├── controllers/
-│   │   └── parkingController.js       # HTTP request handlers & validation
 │   ├── factories/
 │   │   ├── SpotFactory.js             # Factory for ParkingSpot instances
 │   │   └── VehicleFactory.js          # Factory for Vehicle instances
@@ -494,69 +406,62 @@ smart-parking-lot-system-bhaskarreddydn/
 │   │   ├── Payment.js                 # Payment transaction model
 │   │   ├── Ticket.js                  # Ticket lifecycle model
 │   │   └── Vehicle.js                 # Motorcycle, Car, Bus, ElectricCar
-│   ├── routes/
-│   │   └── parkingRoutes.js           # Express API route declarations
 │   ├── services/
 │   │   ├── AllocationService.js       # Spot search & reservation logic
 │   │   ├── ConcurrencyManager.js      # Mutex locks preventing race conditions
 │   │   ├── FeeCalculationService.js   # Dynamic fee calculation orchestrator
 │   │   └── ParkingLotService.js       # Singleton facade & root aggregate
-│   ├── app.js                         # Express middleware & app config
-│   └── server.js                      # Application server entrypoint
+│   └── strategies/
+│       ├── allocation/                # Strategy Pattern: Spot Allocation
+│       │   ├── AllocationStrategy.js
+│       │   ├── BestFitStrategy.js
+│       │   └── NearestSpotStrategy.js
+│       └── pricing/                   # Strategy Pattern: Fee Calculation
+│           ├── DynamicPricingStrategy.js
+│           ├── HourlyPricingStrategy.js
+│           └── PricingStrategy.js
 ├── tests/
 │   ├── concurrency/
 │   │   └── concurrency.test.js        # High-traffic race condition stress tests
-│   ├── integration/
-│   │   └── api.test.js                # Supertest REST API integration suite
 │   └── unit/
 │       ├── allocation.test.js         # Strategy pattern allocation tests
 │       ├── models.test.js             # Domain models unit tests
 │       └── pricing.test.js            # Fee calculation & surge tests
-├── .env.example                       # Environment variable templates
-├── .gitignore                         # Git ignore rules
-├── package.json                       # Scripts, dependencies, metadata
+├── main.js                            # Interactive LLD Driver / Client Simulation
+├── package.json                       # Scripts and project metadata (0 runtime dependencies)
 └── README.md                          # Comprehensive documentation & architecture guide
 ```
 
 ---
 
-## 🚀 Getting Started & Installation
+## 🚀 How to Run the LLD Simulation (`main.js`)
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (version 18.0.0 or higher)
-- npm (version 9.0.0 or higher)
+The `main.js` driver program demonstrates all aspects of the design interactively:
 
-### Setup Instructions
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/bhaskarreddydn/smart-parking-lot-system-bhaskarreddydn.git
-   cd smart-parking-lot-system-bhaskarreddydn
-   ```
+```bash
+node main.js
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+Or using npm:
+```bash
+npm start
+```
 
-3. Configure environment variables (optional):
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Start the server:
-   ```bash
-   npm start
-   ```
-   The backend API will start at `http://localhost:3000`.
+### What `main.js` demonstrates:
+1. **Floor & Spot Hierarchy Setup**: Initializes 3 floors with small, medium, large, and electric spots.
+2. **Vehicle Entry & Strategy Allocation**: Parks a Motorcycle, Car, Bus, and EV using the `NearestSpotStrategy`.
+3. **Display Board Updates**: Verifies real-time count changes via the Observer pattern.
+4. **Concurrency Stress Test**: Dispatches 10 simultaneous vehicle arrivals across Gate 1 and Gate 2 at the exact same millisecond, verifying zero double-booking.
+5. **Fee Calculation & Checkout**: Demonstrates Grace Period (\$0 fee), standard hourly rates, and heavy vehicle pricing.
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Running the Test Suite
 
-The test suite runs using Node.js's native high-performance test runner:
+The test suite runs using Node.js's native test runner (zero third-party test dependencies):
 
 ```bash
-# Run all tests (unit, concurrency, integration)
+# Run all tests (unit + concurrency)
 npm test
 
 # Run only concurrency stress tests
@@ -564,18 +469,4 @@ npm run test:concurrency
 
 # Run unit tests
 npm run test:unit
-
-# Run API integration tests
-npm run test:integration
 ```
-
-### Test Results Summary
-- **Total Tests**: 29 passing (0 failing)
-- **Duration**: ~400ms
-- **Coverage**:
-  - Vehicle and spot compatibility matrices
-  - Nearest spot and best-fit allocation strategies
-  - Hourly and dynamic occupancy surge pricing calculations
-  - Multi-gate concurrent entry without duplicate spot assignments
-  - Capacity saturation and graceful rejection
-  - Full REST API integration lifecycle
