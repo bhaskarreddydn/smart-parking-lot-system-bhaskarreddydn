@@ -28,16 +28,29 @@ export abstract class Gate {
   public closeBarrier(): void {
     this.isOpen = false;
   }
+
+  /**
+   * Abstract method: Each concrete gate specifies its primary operational role
+   */
+  public abstract getGateRoleDescription(): string;
 }
 
 export class EntryGate extends Gate {
   constructor(id: string, name: string = 'Main Entry') {
     super(id, GateType.ENTRY, name);
   }
+
+  public getGateRoleDescription(): string {
+    return 'Allocates spot, issues parking ticket, and opens entry barrier';
+  }
 }
 
 export class ExitGate extends Gate {
   constructor(id: string, name: string = 'Main Exit') {
     super(id, GateType.EXIT, name);
+  }
+
+  public getGateRoleDescription(): string {
+    return 'Validates ticket, verifies fee payment, vacates spot, and opens exit barrier';
   }
 }

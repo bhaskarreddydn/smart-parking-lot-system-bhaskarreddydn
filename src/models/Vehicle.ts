@@ -29,11 +29,20 @@ export abstract class Vehicle {
   public getType(): VehicleType {
     return this.type;
   }
+
+  /**
+   * Abstract method: Each concrete vehicle defines its supported spot compatibility
+   */
+  public abstract getPreferredSpotTypes(): string[];
 }
 
 export class Motorcycle extends Vehicle {
   constructor(licensePlate: string) {
     super(licensePlate, VehicleType.MOTORCYCLE);
+  }
+
+  public getPreferredSpotTypes(): string[] {
+    return ['SMALL', 'MEDIUM', 'LARGE'];
   }
 }
 
@@ -41,16 +50,28 @@ export class Car extends Vehicle {
   constructor(licensePlate: string) {
     super(licensePlate, VehicleType.CAR);
   }
+
+  public getPreferredSpotTypes(): string[] {
+    return ['MEDIUM', 'LARGE'];
+  }
 }
 
 export class Bus extends Vehicle {
   constructor(licensePlate: string) {
     super(licensePlate, VehicleType.BUS);
   }
+
+  public getPreferredSpotTypes(): string[] {
+    return ['LARGE'];
+  }
 }
 
 export class ElectricCar extends Vehicle {
   constructor(licensePlate: string) {
     super(licensePlate, VehicleType.ELECTRIC);
+  }
+
+  public getPreferredSpotTypes(): string[] {
+    return ['ELECTRIC', 'MEDIUM', 'LARGE'];
   }
 }
