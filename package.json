@@ -1,0 +1,44 @@
+{
+  "name": "smart-parking-lot-system-bhaskarreddydn",
+  "version": "1.0.0",
+  "description": "Low-Level Design (LLD) and backend architecture for an urban multi-floor smart parking lot system featuring real-time spot allocation, dynamic fee calculation, multi-gate concurrency handling, and full REST API.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/**/*.test.js",
+    "test:unit": "node --test tests/unit/*.test.js",
+    "test:concurrency": "node --test tests/concurrency/*.test.js",
+    "test:integration": "node --test tests/integration/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhaskarreddydn/smart-parking-lot-system-bhaskarreddydn.git"
+  },
+  "keywords": [
+    "low-level-design",
+    "lld",
+    "object-oriented-design",
+    "smart-parking-lot",
+    "system-design",
+    "concurrency",
+    "design-patterns"
+  ],
+  "author": "Bhaskar Reddy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bhaskarreddydn/smart-parking-lot-system-bhaskarreddydn/issues"
+  },
+  "homepage": "https://github.com/bhaskarreddydn/smart-parking-lot-system-bhaskarreddydn#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">= 18.0.0"
+  }
+}
