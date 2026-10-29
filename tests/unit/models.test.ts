@@ -1,13 +1,13 @@
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
-const { VehicleType, Motorcycle, Car, Bus, ElectricCar } = require('../../src/models/Vehicle');
-const { ParkingSpot, SpotType } = require('../../src/models/ParkingSpot');
-const { Floor } = require('../../src/models/Floor');
-const { Ticket, TicketStatus } = require('../../src/models/Ticket');
-const { Payment, PaymentMethod } = require('../../src/models/Payment');
+import { VehicleType, Motorcycle, Car, Bus, ElectricCar } from '../../src/models/Vehicle';
+import { ParkingSpot, SpotType } from '../../src/models/ParkingSpot';
+import { Floor } from '../../src/models/Floor';
+import { Ticket, TicketStatus } from '../../src/models/Ticket';
+import { Payment, PaymentMethod } from '../../src/models/Payment';
 
-describe('Domain Models Test Suite', () => {
+describe('Domain Models Test Suite (TypeScript)', () => {
   describe('Vehicle Models', () => {
     it('should create valid vehicle instances with normalized uppercase plates', () => {
       const bike = new Motorcycle('ka-01-ab-1234');
@@ -71,7 +71,6 @@ describe('Domain Models Test Suite', () => {
       assert.strictEqual(spot.isOccupied, true);
       assert.strictEqual(spot.currentVehicle, car);
 
-      // Cannot assign again while occupied
       assert.throws(() => spot.assignVehicle(car), /already occupied/);
 
       const vacatedVehicle = spot.vacate();
@@ -124,8 +123,8 @@ describe('Domain Models Test Suite', () => {
 
       const payment = new Payment('PAY-001', ticket.ticketId, 40, PaymentMethod.UPI);
       ticket.attachPayment(payment);
-      assert.strictEqual(ticket.payment.amount, 40);
-      assert.strictEqual(ticket.payment.paymentMethod, 'UPI');
+      assert.strictEqual(ticket.payment?.amount, 40);
+      assert.strictEqual(ticket.payment?.paymentMethod, 'UPI');
     });
   });
 });

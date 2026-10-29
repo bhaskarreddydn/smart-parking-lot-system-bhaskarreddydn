@@ -4,16 +4,18 @@
  * spot starvation, breaking ties by distance to entry.
  */
 
-const { AllocationStrategy } = require('./AllocationStrategy');
-const { CompatibilityMap } = require('../../models/ParkingSpot');
+import { IAllocationStrategy } from './AllocationStrategy';
+import { Floor } from '../../models/Floor';
+import { ParkingSpot, CompatibilityMap } from '../../models/ParkingSpot';
+import { Vehicle } from '../../models/Vehicle';
 
-class BestFitStrategy extends AllocationStrategy {
-  findSpot(floors, vehicle) {
+export class BestFitStrategy implements IAllocationStrategy {
+  public findSpot(floors: Floor[], vehicle: Vehicle): ParkingSpot | null {
     const preferredTypes = CompatibilityMap[vehicle.getType()] || [];
 
     // Iterate through preference order (e.g. SMALL before MEDIUM before LARGE for Motorcycle)
     for (const preferredType of preferredTypes) {
-      let candidateSpot = null;
+      let candidateSpot: ParkingSpot | null = null;
       let minDistance = Infinity;
 
       for (const floor of floors) {
@@ -35,5 +37,3 @@ class BestFitStrategy extends AllocationStrategy {
     return null;
   }
 }
-
-module.exports = { BestFitStrategy };

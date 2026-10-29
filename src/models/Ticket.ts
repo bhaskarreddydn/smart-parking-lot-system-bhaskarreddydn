@@ -3,21 +3,40 @@
  * Represents a parking session created upon entry and settled upon exit.
  */
 
-const TicketStatus = Object.freeze({
-  ACTIVE: 'ACTIVE',
-  PAID: 'PAID',
-  COMPLETED: 'COMPLETED'
-});
+import { Vehicle, VehicleType } from './Vehicle';
+import { ParkingSpot, SpotType } from './ParkingSpot';
+import { Payment } from './Payment';
 
-class Ticket {
-  /**
-   * @param {string} ticketId - Unique Ticket identifier
-   * @param {Vehicle} vehicle - Parked vehicle
-   * @param {ParkingSpot} spot - Assigned parking spot
-   * @param {string} entryGateId - Gate of entry
-   * @param {Date} entryTime - Timestamp of entry
-   */
-  constructor(ticketId, vehicle, spot, entryGateId = 'ENTRY-GATE-1', entryTime = new Date()) {
+export enum TicketStatus {
+  ACTIVE = 'ACTIVE',
+  PAID = 'PAID',
+  COMPLETED = 'COMPLETED'
+}
+
+export class Ticket {
+  public readonly ticketId: string;
+  public readonly licensePlate: string;
+  public readonly vehicleType: VehicleType;
+  public readonly spotId: string;
+  public readonly floorNumber: number;
+  public readonly spotNumber: number;
+  public readonly spotType: SpotType;
+  public readonly entryGateId: string;
+  public readonly entryTime: Date;
+  public exitTime: Date | null;
+  public exitGateId: string | null;
+  public durationMinutes: number;
+  public fee: number;
+  public status: TicketStatus;
+  public payment: Payment | null;
+
+  constructor(
+    ticketId: string,
+    vehicle: Vehicle,
+    spot: ParkingSpot,
+    entryGateId: string = 'ENTRY-GATE-1',
+    entryTime: Date = new Date()
+  ) {
     if (!ticketId) throw new Error('Ticket ID is required');
     if (!vehicle) throw new Error('Vehicle is required');
     if (!spot) throw new Error('Spot is required');
@@ -39,13 +58,7 @@ class Ticket {
     this.payment = null;
   }
 
-  /**
-   * Completes ticket checkout
-   * @param {Date} exitTime
-   * @param {number} fee
-   * @param {string} exitGateId
-   */
-  closeTicket(exitTime, fee, exitGateId = 'EXIT-GATE-1') {
+  public closeTicket(exitTime: Date, fee: number, exitGateId: string = 'EXIT-GATE-1'): void {
     if (this.status === TicketStatus.COMPLETED) {
       throw new Error(`Ticket ${this.ticketId} is already completed`);
     }
@@ -58,14 +71,14 @@ class Ticket {
     this.status = TicketStatus.COMPLETED;
   }
 
-  attachPayment(payment) {
+  public attachPayment(payment: Payment): void {
     this.payment = payment;
     if (this.status !== TicketStatus.COMPLETED) {
       this.status = TicketStatus.PAID;
     }
   }
 
-  toJSON() {
+  public toJSON() {
     return {
       ticketId: this.ticketId,
       licensePlate: this.licensePlate,
@@ -85,8 +98,3 @@ class Ticket {
     };
   }
 }
-
-module.exports = {
-  TicketStatus,
-  Ticket
-};

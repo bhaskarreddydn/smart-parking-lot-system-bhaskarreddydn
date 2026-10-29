@@ -1,15 +1,15 @@
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
 
-const { Floor } = require('../../src/models/Floor');
-const { ParkingSpot, SpotType } = require('../../src/models/ParkingSpot');
-const { Car, Motorcycle, Bus } = require('../../src/models/Vehicle');
-const { NearestSpotStrategy } = require('../../src/strategies/allocation/NearestSpotStrategy');
-const { BestFitStrategy } = require('../../src/strategies/allocation/BestFitStrategy');
-const { AllocationService } = require('../../src/services/AllocationService');
+import { Floor } from '../../src/models/Floor';
+import { ParkingSpot, SpotType } from '../../src/models/ParkingSpot';
+import { Car, Motorcycle, Bus } from '../../src/models/Vehicle';
+import { NearestSpotStrategy } from '../../src/strategies/allocation/NearestSpotStrategy';
+import { BestFitStrategy } from '../../src/strategies/allocation/BestFitStrategy';
+import { AllocationService } from '../../src/services/AllocationService';
 
-describe('Spot Allocation Strategies Test Suite', () => {
-  let floors;
+describe('Spot Allocation Strategies Test Suite (TypeScript)', () => {
+  let floors: Floor[];
 
   beforeEach(() => {
     floors = [
@@ -34,7 +34,7 @@ describe('Spot Allocation Strategies Test Suite', () => {
 
       const spot = strategy.findSpot(floors, car);
       assert.ok(spot);
-      assert.strictEqual(spot.id, 'F1-S02'); // Closest medium spot on Floor 1
+      assert.strictEqual(spot!.id, 'F1-S02');
     });
 
     it('should allocate large vehicle only to LARGE spot', () => {
@@ -43,7 +43,7 @@ describe('Spot Allocation Strategies Test Suite', () => {
 
       const spot = strategy.findSpot(floors, bus);
       assert.ok(spot);
-      assert.strictEqual(spot.id, 'F1-S03');
+      assert.strictEqual(spot!.id, 'F1-S03');
     });
   });
 
@@ -54,8 +54,8 @@ describe('Spot Allocation Strategies Test Suite', () => {
 
       const spot = strategy.findSpot(floors, bike);
       assert.ok(spot);
-      assert.strictEqual(spot.id, 'F1-S01'); // SMALL spot chosen
-      assert.strictEqual(spot.spotType, SpotType.SMALL);
+      assert.strictEqual(spot!.id, 'F1-S01');
+      assert.strictEqual(spot!.spotType, SpotType.SMALL);
     });
 
     it('should choose MEDIUM spot for car even when LARGE spot is also available', () => {
@@ -64,8 +64,8 @@ describe('Spot Allocation Strategies Test Suite', () => {
 
       const spot = strategy.findSpot(floors, car);
       assert.ok(spot);
-      assert.strictEqual(spot.id, 'F1-S02'); // MEDIUM spot chosen
-      assert.strictEqual(spot.spotType, SpotType.MEDIUM);
+      assert.strictEqual(spot!.id, 'F1-S02');
+      assert.strictEqual(spot!.spotType, SpotType.MEDIUM);
     });
   });
 
@@ -74,8 +74,8 @@ describe('Spot Allocation Strategies Test Suite', () => {
       const service = new AllocationService(new NearestSpotStrategy());
 
       // Occupy all LARGE spots
-      floors[0].getSpot('F1-S03').assignVehicle(new Bus('B1'));
-      floors[1].getSpot('F2-S02').assignVehicle(new Bus('B2'));
+      floors[0].getSpot('F1-S03')!.assignVehicle(new Bus('B1'));
+      floors[1].getSpot('F2-S02')!.assignVehicle(new Bus('B2'));
 
       // Next bus should fail
       const nextBus = new Bus('B3');

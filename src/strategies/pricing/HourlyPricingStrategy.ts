@@ -3,17 +3,28 @@
  * Calculates fee on an hourly basis with a 15-minute grace period.
  */
 
-const { PricingStrategy } = require('./PricingStrategy');
-const { PRICING_CONFIG } = require('../../config/pricingConfig');
+import { IPricingStrategy, FeeCalculationResult } from './PricingStrategy';
+import { Ticket } from '../../models/Ticket';
+import { VehicleType } from '../../models/Vehicle';
+import { PRICING_CONFIG } from '../../config/pricingConfig';
 
-class HourlyPricingStrategy extends PricingStrategy {
-  constructor(rates = PRICING_CONFIG.BASE_RATES, gracePeriodMinutes = PRICING_CONFIG.GRACE_PERIOD_MINUTES) {
-    super();
+export class HourlyPricingStrategy implements IPricingStrategy {
+  protected readonly rates: Record<VehicleType, number>;
+  protected readonly gracePeriodMinutes: number;
+
+  constructor(
+    rates: Record<VehicleType, number> = PRICING_CONFIG.BASE_RATES,
+    gracePeriodMinutes: number = PRICING_CONFIG.GRACE_PERIOD_MINUTES
+  ) {
     this.rates = rates;
     this.gracePeriodMinutes = gracePeriodMinutes;
   }
 
-  calculateFee(ticket, exitTime = new Date(), currentOccupancyPercent = 0) {
+  public calculateFee(
+    ticket: Ticket,
+    exitTime: Date = new Date(),
+    _currentOccupancyPercent: number = 0
+  ): FeeCalculationResult {
     const entryTime = new Date(ticket.entryTime);
     const exit = new Date(exitTime);
 
@@ -24,13 +35,15 @@ class HourlyPricingStrategy extends PricingStrategy {
     const durationMs = exit.getTime() - entryTime.getTime();
     const durationMinutes = Math.max(0, Math.round(durationMs / (1000 * 60)));
 
+    const hourlyRate = this.rates[ticket.vehicleType] || 20;
+
     // Check grace period
     if (durationMinutes <= this.gracePeriodMinutes) {
       return {
         totalFee: 0,
         billableHours: 0,
         durationMinutes,
-        hourlyRate: this.rates[ticket.vehicleType] || 20,
+        hourlyRate,
         breakdown: {
           note: `Stayed within grace period of ${this.gracePeriodMinutes} mins. No charge.`,
           durationMinutes,
@@ -41,7 +54,6 @@ class HourlyPricingStrategy extends PricingStrategy {
 
     // Billable hours: ceiling of (durationMinutes / 60)
     const billableHours = Math.max(1, Math.ceil(durationMinutes / 60));
-    const hourlyRate = this.rates[ticket.vehicleType] || 20;
     const totalFee = billableHours * hourlyRate;
 
     return {
@@ -58,5 +70,3 @@ class HourlyPricingStrategy extends PricingStrategy {
     };
   }
 }
-
-module.exports = { HourlyPricingStrategy };

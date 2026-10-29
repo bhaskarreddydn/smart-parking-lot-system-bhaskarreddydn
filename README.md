@@ -1,18 +1,18 @@
-# Smart Parking Lot System - Low-Level Design (LLD)
+# Smart Parking Lot System - Low-Level Design (LLD in TypeScript)
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6%2B-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-v18%2B%20%7C%20v24-green.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Zero External Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Node%20OOP)-brightgreen.svg)]()
 [![Tests](https://img.shields.io/badge/Tests-21%2F21%20Passing-brightgreen.svg)]()
 [![Design Patterns](https://img.shields.io/badge/Design%20Patterns-SOLID%20%7C%20Strategy%20%7C%20Factory%20%7C%20Observer%20%7C%20Singleton-orange.svg)]()
 
-> **Project Objective**: Low-Level Design (LLD) and object-oriented backend architecture for an urban multi-floor smart parking lot system. The system automates vehicle entry and exit management, parking space allocation based on vehicle size and proximity, real-time availability updates across floors, dynamic fee calculations, and multi-gate concurrency control to prevent double booking.
+> **Project Objective**: Low-Level Design (LLD) and object-oriented backend architecture written in **TypeScript** for an urban multi-floor smart parking lot system. The system automates vehicle entry and exit management, parking space allocation based on vehicle size and proximity, real-time availability updates across floors, dynamic fee calculations, and multi-gate concurrency control to prevent double booking.
 
 ---
 
 ## 📑 Table of Contents
 1. [Core Requirements & Features](#-core-requirements--features)
-2. [Object-Oriented Design & Design Patterns](#-object-oriented-design--design-patterns)
+2. [TypeScript OOP Design & Patterns](#-typescript-oop-design--patterns)
 3. [Architecture & UML Diagrams](#-architecture--uml-diagrams)
    - [Class Diagram](#class-diagram)
    - [Vehicle Check-In Flow (Sequence Diagram)](#vehicle-check-in-flow)
@@ -22,8 +22,8 @@
 5. [Fee Calculation & Dynamic Pricing](#-fee-calculation--dynamic-pricing)
 6. [Concurrency & Race Condition Handling](#-concurrency--race-condition-handling)
 7. [Database Schema DDL](#-database-schema-ddl)
-8. [Project Structure](#-project-structure)
-9. [How to Run the LLD Simulation (`main.js`)](#-how-to-run-the-lld-simulation-mainjs)
+8. [Project Structure (TypeScript)](#-project-structure-typescript)
+9. [How to Run the Simulation (`main.ts`)](#-how-to-run-the-simulation-maints)
 10. [Running the Test Suite](#-running-the-test-suite)
 
 ---
@@ -58,18 +58,18 @@
 
 ---
 
-## 🏗️ Object-Oriented Design & Design Patterns
+## 🏗️ TypeScript OOP Design & Patterns
 
-The architecture strictly adheres to **SOLID** principles:
+The architecture strictly adheres to **SOLID** principles with strong static typing:
 
-| Design Pattern | Component | Purpose |
+| Design Pattern | TypeScript Component | Purpose |
 | :--- | :--- | :--- |
-| **Strategy Pattern** | `AllocationStrategy`<br>`NearestSpotStrategy`<br>`BestFitStrategy` | Encapsulates spot search algorithms and allows switching allocation policies at runtime without modifying client code. |
-| **Strategy Pattern** | `PricingStrategy`<br>`HourlyPricingStrategy`<br>`DynamicPricingStrategy` | Decouples fee calculation logic from ticket checkout, enabling surge pricing or special rate cards. |
-| **Factory Pattern** | `VehicleFactory`<br>`SpotFactory` | Centralizes creation and validation of vehicles and parking spots. |
+| **Strategy Pattern** | `interface IAllocationStrategy`<br>`NearestSpotStrategy`<br>`BestFitStrategy` | Encapsulates spot search algorithms and allows switching allocation policies at runtime without modifying client code. |
+| **Strategy Pattern** | `interface IPricingStrategy`<br>`HourlyPricingStrategy`<br>`DynamicPricingStrategy` | Decouples fee calculation logic from ticket checkout, enabling surge pricing or special rate cards. |
+| **Factory Pattern** | `VehicleFactory`<br>`SpotFactory` | Centralizes creation and type validation of vehicles and parking spots. |
 | **Observer Pattern** | `DisplayBoard`<br>`Floor.notifyDisplayBoard()` | Floor and master display boards subscribe to spot occupancy changes and update real-time counts automatically. |
 | **Singleton / Facade** | `ParkingLotService` | Serves as the central API facade coordinating gates, floors, allocation, tickets, and concurrency locks. |
-| **Mutex / Lock Pattern** | `ConcurrencyManager` | Serializes critical spot allocation sections across parallel gates to guarantee zero double-booking. |
+| **Mutex / Lock Pattern** | `ConcurrencyManager`<br>`Mutex` | Serializes critical spot allocation sections across parallel gates to guarantee zero double-booking. |
 
 ---
 
@@ -153,7 +153,7 @@ classDiagram
         +update(List~ParkingSpot~) void
     }
 
-    class AllocationStrategy {
+    class IAllocationStrategy {
         <<interface>>
         +findSpot(List~Floor~, Vehicle) ParkingSpot
     }
@@ -166,23 +166,23 @@ classDiagram
         +findSpot(List~Floor~, Vehicle) ParkingSpot
     }
 
-    AllocationStrategy <|.. NearestSpotStrategy
-    AllocationStrategy <|.. BestFitStrategy
+    IAllocationStrategy <|.. NearestSpotStrategy
+    IAllocationStrategy <|.. BestFitStrategy
 
-    class PricingStrategy {
+    class IPricingStrategy {
         <<interface>>
-        +calculateFee(Ticket, DateTime, Int) Object
+        +calculateFee(Ticket, DateTime, Int) FeeCalculationResult
     }
 
     class HourlyPricingStrategy {
-        +calculateFee(Ticket, DateTime, Int) Object
+        +calculateFee(Ticket, DateTime, Int) FeeCalculationResult
     }
 
     class DynamicPricingStrategy {
-        +calculateFee(Ticket, DateTime, Int) Object
+        +calculateFee(Ticket, DateTime, Int) FeeCalculationResult
     }
 
-    PricingStrategy <|.. HourlyPricingStrategy
+    IPricingStrategy <|.. HourlyPricingStrategy
     HourlyPricingStrategy <|-- DynamicPricingStrategy
 
     Floor "1" *-- "*" ParkingSpot
@@ -364,14 +364,14 @@ erDiagram
 When multiple vehicles arrive at simultaneous entrance gates (e.g. Gate 1 and Gate 2) within the same millisecond:
 - Without concurrency protection, two incoming cars would read the same available spot as free and receive duplicate tickets for the same physical slot.
 - **Solution**: The `ConcurrencyManager` introduces an asynchronous Mutex mechanism around the allocation critical section:
-  ```javascript
+  ```typescript
   await concurrencyManager.withAllocationLock(async () => {
     const spot = allocationService.allocateSpot(floors, vehicle);
     spot.assignVehicle(vehicle);
     // Spot is marked occupied atomically before next queued request evaluates availability
   });
   ```
-- **Verification**: Verified under heavy multi-threading simulation (`tests/concurrency/concurrency.test.js`), confirming **100% unique spot assignments** and zero duplicate bookings.
+- **Verification**: Verified under heavy multi-threading simulation (`tests/concurrency/concurrency.test.ts`), confirming **100% unique spot assignments** and zero duplicate bookings.
 
 ---
 
@@ -386,7 +386,7 @@ Highlights:
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure (TypeScript)
 
 ```
 smart-parking-lot-system-bhaskarreddydn/
@@ -394,60 +394,62 @@ smart-parking-lot-system-bhaskarreddydn/
 │   └── schema.sql                     # Relational database DDL, indexes, seed data
 ├── src/
 │   ├── config/
-│   │   └── pricingConfig.js           # Rates, grace periods, surge rules
+│   │   └── pricingConfig.ts           # Rates, grace periods, surge rules
 │   ├── factories/
-│   │   ├── SpotFactory.js             # Factory for ParkingSpot instances
-│   │   └── VehicleFactory.js          # Factory for Vehicle instances
+│   │   ├── SpotFactory.ts             # Factory Pattern: creates ParkingSpots
+│   │   └── VehicleFactory.ts          # Factory Pattern: creates Vehicles
 │   ├── models/
-│   │   ├── DisplayBoard.js            # Observer Pattern display boards
-│   │   ├── Floor.js                   # Floor aggregate managing spots
-│   │   ├── Gate.js                    # Entry & Exit gate models
-│   │   ├── ParkingSpot.js             # Spot model & compatibility logic
-│   │   ├── Payment.js                 # Payment transaction model
-│   │   ├── Ticket.js                  # Ticket lifecycle model
-│   │   └── Vehicle.js                 # Motorcycle, Car, Bus, ElectricCar
+│   │   ├── DisplayBoard.ts            # Observer Pattern: real-time counts
+│   │   ├── Floor.ts                   # Floor aggregate managing spots
+│   │   ├── Gate.ts                    # Entry & Exit gate models
+│   │   ├── ParkingSpot.ts             # Spot model & compatibility logic
+│   │   ├── Payment.ts                 # Payment transaction model
+│   │   ├── Ticket.ts                  # Ticket lifecycle model
+│   │   └── Vehicle.ts                 # Motorcycle, Car, Bus, ElectricCar
 │   ├── services/
-│   │   ├── AllocationService.js       # Spot search & reservation logic
-│   │   ├── ConcurrencyManager.js      # Mutex locks preventing race conditions
-│   │   ├── FeeCalculationService.js   # Dynamic fee calculation orchestrator
-│   │   └── ParkingLotService.js       # Singleton facade & root aggregate
+│   │   ├── AllocationService.ts       # Spot search & reservation logic
+│   │   ├── ConcurrencyManager.ts      # Mutex locks preventing race conditions
+│   │   ├── FeeCalculationService.ts   # Dynamic fee calculation orchestrator
+│   │   └── ParkingLotService.ts       # Singleton facade & root aggregate
 │   └── strategies/
 │       ├── allocation/                # Strategy Pattern: Spot Allocation
-│       │   ├── AllocationStrategy.js
-│       │   ├── BestFitStrategy.js
-│       │   └── NearestSpotStrategy.js
+│       │   ├── AllocationStrategy.ts
+│       │   ├── BestFitStrategy.ts
+│       │   └── NearestSpotStrategy.ts
 │       └── pricing/                   # Strategy Pattern: Fee Calculation
-│           ├── DynamicPricingStrategy.js
-│           ├── HourlyPricingStrategy.js
-│           └── PricingStrategy.js
+│           ├── DynamicPricingStrategy.ts
+│           ├── HourlyPricingStrategy.ts
+│           └── PricingStrategy.ts
 ├── tests/
 │   ├── concurrency/
-│   │   └── concurrency.test.js        # High-traffic race condition stress tests
+│   │   └── concurrency.test.ts        # High-traffic race condition stress tests
 │   └── unit/
-│       ├── allocation.test.js         # Strategy pattern allocation tests
-│       ├── models.test.js             # Domain models unit tests
-│       └── pricing.test.js            # Fee calculation & surge tests
-├── main.js                            # Interactive LLD Driver / Client Simulation
-├── package.json                       # Scripts and project metadata (0 runtime dependencies)
+│       ├── allocation.test.ts         # Strategy pattern allocation tests
+│       ├── models.test.ts             # Domain models unit tests
+│       └── pricing.test.ts            # Fee calculation & surge tests
+├── main.ts                            # Interactive TypeScript LLD Driver Simulation
+├── tsconfig.json                      # Strict TypeScript compiler options
+├── package.json                       # Scripts and project metadata
 └── README.md                          # Comprehensive documentation & architecture guide
 ```
 
 ---
 
-## 🚀 How to Run the LLD Simulation (`main.js`)
+## 🚀 How to Run the Simulation (`main.ts`)
 
-The `main.js` driver program demonstrates all aspects of the design interactively:
+Run the TypeScript driver program directly using `tsx`:
 
-```bash
-node main.js
-```
-
-Or using npm:
 ```bash
 npm start
 ```
+*(or `npx tsx main.ts`)*
 
-### What `main.js` demonstrates:
+To compile the TypeScript project to JavaScript:
+```bash
+npm run build
+```
+
+### What `main.ts` demonstrates:
 1. **Floor & Spot Hierarchy Setup**: Initializes 3 floors with small, medium, large, and electric spots.
 2. **Vehicle Entry & Strategy Allocation**: Parks a Motorcycle, Car, Bus, and EV using the `NearestSpotStrategy`.
 3. **Display Board Updates**: Verifies real-time count changes via the Observer pattern.
@@ -458,7 +460,7 @@ npm start
 
 ## 🧪 Running the Test Suite
 
-The test suite runs using Node.js's native test runner (zero third-party test dependencies):
+The test suite runs using Node.js's native test runner with `tsx`:
 
 ```bash
 # Run all tests (unit + concurrency)

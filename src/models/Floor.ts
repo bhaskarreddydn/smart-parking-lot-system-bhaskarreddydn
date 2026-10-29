@@ -3,21 +3,31 @@
  * Represents a single level in a multi-floor parking structure.
  */
 
-const { DisplayBoard } = require('./DisplayBoard');
+import { ParkingSpot } from './ParkingSpot';
+import { Vehicle } from './Vehicle';
+import { DisplayBoard, DisplayStatus } from './DisplayBoard';
 
-class Floor {
-  /**
-   * @param {number} floorNumber - 1-indexed floor number
-   * @param {string} name - e.g. "Level 1" or "Basement 1"
-   */
-  constructor(floorNumber, name = `Floor ${floorNumber}`) {
+export interface FloorStatus {
+  floorNumber: number;
+  name: string;
+  display: DisplayStatus;
+  spots: ReturnType<ParkingSpot['toJSON']>[];
+}
+
+export class Floor {
+  public readonly floorNumber: number;
+  public readonly name: string;
+  public readonly spots: Map<string, ParkingSpot>;
+  public readonly displayBoard: DisplayBoard;
+
+  constructor(floorNumber: number, name: string = `Floor ${floorNumber}`) {
     this.floorNumber = floorNumber;
     this.name = name;
-    this.spots = new Map(); // spotId -> ParkingSpot
+    this.spots = new Map<string, ParkingSpot>();
     this.displayBoard = new DisplayBoard(`DISPLAY-F${floorNumber}`, floorNumber);
   }
 
-  addSpot(parkingSpot) {
+  public addSpot(parkingSpot: ParkingSpot): void {
     if (this.spots.has(parkingSpot.id)) {
       throw new Error(`Spot ${parkingSpot.id} already exists on floor ${this.floorNumber}`);
     }
@@ -25,27 +35,27 @@ class Floor {
     this.notifyDisplayBoard();
   }
 
-  getSpot(spotId) {
+  public getSpot(spotId: string): ParkingSpot | null {
     return this.spots.get(spotId) || null;
   }
 
-  getAllSpots() {
+  public getAllSpots(): ParkingSpot[] {
     return Array.from(this.spots.values());
   }
 
-  getAvailableSpots() {
+  public getAvailableSpots(): ParkingSpot[] {
     return this.getAllSpots().filter(spot => !spot.isOccupied);
   }
 
-  getAvailableSpotsForVehicle(vehicle) {
+  public getAvailableSpotsForVehicle(vehicle: Vehicle): ParkingSpot[] {
     return this.getAllSpots().filter(spot => spot.canFitVehicle(vehicle));
   }
 
-  notifyDisplayBoard() {
+  public notifyDisplayBoard(): void {
     this.displayBoard.update(this.getAllSpots());
   }
 
-  getFloorStatus() {
+  public getFloorStatus(): FloorStatus {
     return {
       floorNumber: this.floorNumber,
       name: this.name,
@@ -54,5 +64,3 @@ class Floor {
     };
   }
 }
-
-module.exports = { Floor };

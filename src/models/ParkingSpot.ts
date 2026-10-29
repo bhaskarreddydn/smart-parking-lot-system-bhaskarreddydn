@@ -3,37 +3,42 @@
  * Represents a physical parking slot with dimensions, floor location, and occupancy status.
  */
 
-const { VehicleType } = require('./Vehicle');
+import { Vehicle, VehicleType } from './Vehicle';
 
-const SpotType = Object.freeze({
-  SMALL: 'SMALL',       // For Motorcycles, Scooters
-  MEDIUM: 'MEDIUM',     // For standard Cars, Sedans, Hatchbacks
-  LARGE: 'LARGE',       // For Buses, Vans, Trucks
-  ELECTRIC: 'ELECTRIC'  // For EV vehicles with charging infrastructure
-});
+export enum SpotType {
+  SMALL = 'SMALL',       // For Motorcycles, Scooters
+  MEDIUM = 'MEDIUM',     // For standard Cars, Sedans
+  LARGE = 'LARGE',       // For Buses, Vans, Trucks
+  ELECTRIC = 'ELECTRIC'  // For EV vehicles with charging infrastructure
+}
 
-// Mapping of vehicle types to acceptable spot types (in order of preference)
-const CompatibilityMap = {
+// Vehicle to Spot compatibility map (in order of preference)
+export const CompatibilityMap: Record<VehicleType, SpotType[]> = {
   [VehicleType.MOTORCYCLE]: [SpotType.SMALL, SpotType.MEDIUM, SpotType.LARGE],
   [VehicleType.CAR]: [SpotType.MEDIUM, SpotType.LARGE],
   [VehicleType.BUS]: [SpotType.LARGE],
   [VehicleType.ELECTRIC]: [SpotType.ELECTRIC, SpotType.MEDIUM, SpotType.LARGE]
 };
 
-class ParkingSpot {
-  /**
-   * @param {string} id - Unique identifier e.g. "F1-S01"
-   * @param {number} floorNumber - Floor number (1, 2, 3...)
-   * @param {number} spotNumber - Number on that floor
-   * @param {string} spotType - SpotType enum
-   * @param {number} distanceFromEntry - Normalized distance (meters or walking score)
-   */
-  constructor(id, floorNumber, spotNumber, spotType, distanceFromEntry = 10) {
+export class ParkingSpot {
+  public readonly id: string;
+  public readonly floorNumber: number;
+  public readonly spotNumber: number;
+  public readonly spotType: SpotType;
+  public readonly distanceFromEntry: number;
+  public isOccupied: boolean;
+  public currentVehicle: Vehicle | null;
+  public occupiedSince: Date | null;
+
+  constructor(
+    id: string,
+    floorNumber: number,
+    spotNumber: number,
+    spotType: SpotType,
+    distanceFromEntry: number = 10
+  ) {
     if (!id || typeof id !== 'string') {
       throw new Error('Valid spot ID is required');
-    }
-    if (!Object.values(SpotType).includes(spotType)) {
-      throw new Error(`Invalid spot type: ${spotType}`);
     }
 
     this.id = id;
@@ -46,24 +51,13 @@ class ParkingSpot {
     this.occupiedSince = null;
   }
 
-  /**
-   * Determines if this spot can accommodate a given vehicle
-   * @param {Vehicle} vehicle
-   * @returns {boolean}
-   */
-  canFitVehicle(vehicle) {
-    if (!vehicle) return false;
-    if (this.isOccupied) return false;
-
-    const allowedSpotTypes = CompatibilityMap[vehicle.getType()];
-    return allowedSpotTypes ? allowedSpotTypes.includes(this.spotType) : false;
+  public canFitVehicle(vehicle: Vehicle | null): boolean {
+    if (!vehicle || this.isOccupied) return false;
+    const allowed = CompatibilityMap[vehicle.getType()];
+    return allowed ? allowed.includes(this.spotType) : false;
   }
 
-  /**
-   * Assigns a vehicle to this spot
-   * @param {Vehicle} vehicle
-   */
-  assignVehicle(vehicle) {
+  public assignVehicle(vehicle: Vehicle): void {
     if (this.isOccupied) {
       throw new Error(`Spot ${this.id} is already occupied`);
     }
@@ -76,12 +70,8 @@ class ParkingSpot {
     this.occupiedSince = new Date();
   }
 
-  /**
-   * Vacates the spot and returns the vehicle that was parked
-   * @returns {Vehicle}
-   */
-  vacate() {
-    if (!this.isOccupied) {
+  public vacate(): Vehicle {
+    if (!this.isOccupied || !this.currentVehicle) {
       throw new Error(`Spot ${this.id} is already vacant`);
     }
 
@@ -92,7 +82,7 @@ class ParkingSpot {
     return previousVehicle;
   }
 
-  toJSON() {
+  public toJSON() {
     return {
       id: this.id,
       floorNumber: this.floorNumber,
@@ -108,9 +98,3 @@ class ParkingSpot {
     };
   }
 }
-
-module.exports = {
-  SpotType,
-  CompatibilityMap,
-  ParkingSpot
-};

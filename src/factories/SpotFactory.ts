@@ -3,17 +3,15 @@
  * Creates ParkingSpot instances with standardized IDs and distance weights.
  */
 
-const { ParkingSpot, SpotType } = require('../models/ParkingSpot');
+import { ParkingSpot, SpotType } from '../models/ParkingSpot';
 
-class SpotFactory {
-  /**
-   * @param {number} floorNumber
-   * @param {number} spotNumber
-   * @param {string} spotType - SpotType enum
-   * @param {number|null} distanceOverride
-   * @returns {ParkingSpot}
-   */
-  static createSpot(floorNumber, spotNumber, spotType, distanceOverride = null) {
+export class SpotFactory {
+  public static createSpot(
+    floorNumber: number,
+    spotNumber: number,
+    spotType: SpotType,
+    distanceOverride: number | null = null
+  ): ParkingSpot {
     const paddedSpot = String(spotNumber).padStart(2, '0');
     const id = `F${floorNumber}-S${paddedSpot}`;
 
@@ -25,5 +23,3 @@ class SpotFactory {
     return new ParkingSpot(id, floorNumber, spotNumber, spotType, calculatedDistance);
   }
 }
-
-module.exports = { SpotFactory };

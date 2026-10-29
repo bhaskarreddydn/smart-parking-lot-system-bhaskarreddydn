@@ -1,8 +1,8 @@
 /**
  * ============================================================================
- * SMART PARKING LOT SYSTEM - DRIVER PROGRAM (LLD DEMONSTRATION)
+ * SMART PARKING LOT SYSTEM - DRIVER PROGRAM (TYPESCRIPT LLD DEMO)
  * ============================================================================
- * This driver script demonstrates the Low-Level Design (LLD) in action:
+ * Demonstrates the Low-Level Design (LLD) in action:
  * 1. Domain Models & Object-Oriented Hierarchy
  * 2. Strategy Pattern for Spot Allocation (Nearest vs. Best-Fit)
  * 3. Observer Pattern for Real-Time Display Boards
@@ -11,13 +11,13 @@
  * ============================================================================
  */
 
-const { ParkingLotService } = require('./src/services/ParkingLotService');
-const { VehicleType } = require('./src/models/Vehicle');
-const { PaymentMethod } = require('./src/models/Payment');
+import { ParkingLotService } from './src/services/ParkingLotService';
+import { VehicleType } from './src/models/Vehicle';
+import { PaymentMethod } from './src/models/Payment';
 
-async function runLLDDemo() {
+async function runLLDDemo(): Promise<void> {
   console.log('================================================================');
-  console.log('   SMART PARKING LOT SYSTEM - LOW-LEVEL DESIGN (LLD) DEMO');
+  console.log('   SMART PARKING LOT SYSTEM - LOW-LEVEL DESIGN (LLD - TYPESCRIPT)');
   console.log('================================================================\n');
 
   // 1. INITIALIZE PARKING LOT (3 Floors, 10 Spots per floor = 30 spots total)
@@ -115,11 +115,10 @@ async function runLLDDemo() {
   console.log(`   Completed Transactions : ${finalStatus.totalCompletedTransactions}`);
   console.log(`   Free Spots Available   : ${finalStatus.masterDisplay.freeSpots}`);
   console.log('================================================================');
-  console.log('   ALL LOW-LEVEL DESIGN REQUIREMENTS VERIFIED SUCCESSFULLY!');
+  console.log('   ALL LOW-LEVEL DESIGN REQUIREMENTS VERIFIED SUCCESSFULLY (TYPESCRIPT)!');
   console.log('================================================================');
 }
 
-// Run the demo
 runLLDDemo().catch(err => {
   console.error('Simulation error:', err);
 });

@@ -3,14 +3,28 @@
  * Displays real-time counts of available spots by spot type.
  */
 
-const { SpotType } = require('./ParkingSpot');
+import { ParkingSpot, SpotType } from './ParkingSpot';
 
-class DisplayBoard {
-  /**
-   * @param {string} id - Identifier e.g. "DISPLAY-F1" or "DISPLAY-MAIN"
-   * @param {number|null} floorNumber - Associated floor number, or null for lot-wide board
-   */
-  constructor(id, floorNumber = null) {
+export interface DisplayStatus {
+  displayId: string;
+  floorNumber: number | null;
+  totalSpots: number;
+  occupiedSpots: number;
+  freeSpots: number;
+  isFull: boolean;
+  availableByType: Record<SpotType, number>;
+  lastUpdated: Date;
+}
+
+export class DisplayBoard {
+  public readonly id: string;
+  public readonly floorNumber: number | null;
+  public availableCounts: Record<SpotType, number>;
+  public totalSpots: number;
+  public occupiedSpots: number;
+  public lastUpdated: Date;
+
+  constructor(id: string, floorNumber: number | null = null) {
     this.id = id;
     this.floorNumber = floorNumber;
     this.availableCounts = {
@@ -24,12 +38,8 @@ class DisplayBoard {
     this.lastUpdated = new Date();
   }
 
-  /**
-   * Recalculates metrics based on active spots
-   * @param {ParkingSpot[]} spots
-   */
-  update(spots) {
-    const counts = {
+  public update(spots: ParkingSpot[]): void {
+    const counts: Record<SpotType, number> = {
       [SpotType.SMALL]: 0,
       [SpotType.MEDIUM]: 0,
       [SpotType.LARGE]: 0,
@@ -54,7 +64,7 @@ class DisplayBoard {
     this.lastUpdated = new Date();
   }
 
-  getDisplayStatus() {
+  public getDisplayStatus(): DisplayStatus {
     return {
       displayId: this.id,
       floorNumber: this.floorNumber,
@@ -67,5 +77,3 @@ class DisplayBoard {
     };
   }
 }
-
-module.exports = { DisplayBoard };

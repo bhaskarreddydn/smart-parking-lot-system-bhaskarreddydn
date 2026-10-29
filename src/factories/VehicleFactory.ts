@@ -3,22 +3,18 @@
  * Instantiates concrete Vehicle objects according to vehicle type.
  */
 
-const {
+import {
+  Vehicle,
   VehicleType,
   Motorcycle,
   Car,
   Bus,
   ElectricCar
-} = require('../models/Vehicle');
+} from '../models/Vehicle';
 
-class VehicleFactory {
-  /**
-   * @param {string} licensePlate
-   * @param {string} type - VehicleType
-   * @returns {Vehicle}
-   */
-  static createVehicle(licensePlate, type) {
-    const normalizedType = (type || '').trim().toUpperCase();
+export class VehicleFactory {
+  public static createVehicle(licensePlate: string, type: VehicleType | string): Vehicle {
+    const normalizedType = (type || '').trim().toUpperCase() as VehicleType;
 
     switch (normalizedType) {
       case VehicleType.MOTORCYCLE:
@@ -36,5 +32,3 @@ class VehicleFactory {
     }
   }
 }
-
-module.exports = { VehicleFactory };

@@ -3,16 +3,23 @@
  * Extends hourly pricing with real-time occupancy-based surge multipliers.
  */
 
-const { HourlyPricingStrategy } = require('./HourlyPricingStrategy');
-const { PRICING_CONFIG } = require('../../config/pricingConfig');
+import { HourlyPricingStrategy } from './HourlyPricingStrategy';
+import { FeeCalculationResult } from './PricingStrategy';
+import { Ticket } from '../../models/Ticket';
+import { PRICING_CONFIG, SurgeThreshold } from '../../config/pricingConfig';
 
-class DynamicPricingStrategy extends HourlyPricingStrategy {
-  constructor(rates = PRICING_CONFIG.BASE_RATES, thresholds = PRICING_CONFIG.SURGE_THRESHOLDS) {
+export class DynamicPricingStrategy extends HourlyPricingStrategy {
+  private readonly thresholds: SurgeThreshold[];
+
+  constructor(
+    rates = PRICING_CONFIG.BASE_RATES,
+    thresholds: SurgeThreshold[] = PRICING_CONFIG.SURGE_THRESHOLDS
+  ) {
     super(rates, PRICING_CONFIG.GRACE_PERIOD_MINUTES);
     this.thresholds = thresholds;
   }
 
-  getMultiplier(occupancyPercent) {
+  public getMultiplier(occupancyPercent: number): number {
     for (const rule of this.thresholds) {
       if (occupancyPercent >= rule.minOccupancyPercent) {
         return rule.multiplier;
@@ -21,7 +28,11 @@ class DynamicPricingStrategy extends HourlyPricingStrategy {
     return 1.0;
   }
 
-  calculateFee(ticket, exitTime = new Date(), currentOccupancyPercent = 0) {
+  public override calculateFee(
+    ticket: Ticket,
+    exitTime: Date = new Date(),
+    currentOccupancyPercent: number = 0
+  ): FeeCalculationResult {
     const baseCalculation = super.calculateFee(ticket, exitTime, currentOccupancyPercent);
 
     if (baseCalculation.totalFee === 0) {
@@ -46,5 +57,3 @@ class DynamicPricingStrategy extends HourlyPricingStrategy {
     };
   }
 }
-
-module.exports = { DynamicPricingStrategy };

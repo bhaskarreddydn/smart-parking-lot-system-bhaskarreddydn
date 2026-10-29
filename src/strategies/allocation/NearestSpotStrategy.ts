@@ -3,11 +3,14 @@
  * Selects the available spot closest to the entry gate (lower floor, lower distance score).
  */
 
-const { AllocationStrategy } = require('./AllocationStrategy');
+import { IAllocationStrategy } from './AllocationStrategy';
+import { Floor } from '../../models/Floor';
+import { ParkingSpot } from '../../models/ParkingSpot';
+import { Vehicle } from '../../models/Vehicle';
 
-class NearestSpotStrategy extends AllocationStrategy {
-  findSpot(floors, vehicle) {
-    let nearestSpot = null;
+export class NearestSpotStrategy implements IAllocationStrategy {
+  public findSpot(floors: Floor[], vehicle: Vehicle): ParkingSpot | null {
+    let nearestSpot: ParkingSpot | null = null;
     let minDistance = Infinity;
 
     // Scan floors from ground level up
@@ -30,5 +33,3 @@ class NearestSpotStrategy extends AllocationStrategy {
     return nearestSpot;
   }
 }
-
-module.exports = { NearestSpotStrategy };
